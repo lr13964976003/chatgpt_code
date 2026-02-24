@@ -46,8 +46,9 @@ python generated/replay_workload.py --warmup 2 --iters 10 --device npu:0
 - `[{...}, {...}]`
 - `{"events": [{...}]}`
 - `{"traceEvents": [{...}]}`
+- Chakra execution trace: `{"schema": "1.1.1-chakra.*", "start_ts": ..., "nodes": [...]}`（即使没有 ts/dur 也支持）
 
-关键字段示例：
+关键字段示例（events 模式）：
 
 ```json
 {

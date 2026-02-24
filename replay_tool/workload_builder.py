@@ -17,16 +17,26 @@ def merge_execution_and_kineto(
     合并两类 trace:
     - 以 execution trace 为主体顺序。
     - 用 kineto 的 duration / stream / 低层信息补全。
+    - 当 execution 缺失 stream 时，回退到仅按 op_name 匹配。
     """
     kineto_index: Dict[Tuple[str, int | None], List[OpEvent]] = {}
+    kineto_name_only: Dict[str, List[OpEvent]] = {}
     for event in kineto_events:
         kineto_index.setdefault(_event_key(event), []).append(event)
+        kineto_name_only.setdefault(event.name, []).append(event)
 
     merged: List[OpEvent] = []
     for exe in sorted(execution_events, key=lambda x: x.ts_us):
         candidates = kineto_index.get(_event_key(exe), [])
+        kin: OpEvent | None = None
         if candidates:
             kin = candidates.pop(0)
+        elif exe.stream is None:
+            fallback = kineto_name_only.get(exe.name, [])
+            if fallback:
+                kin = fallback.pop(0)
+
+        if kin is not None:
             if exe.duration_us <= 0 and kin.duration_us > 0:
                 exe.duration_us = kin.duration_us
             if exe.stream is None:
@@ -34,6 +44,7 @@ def merge_execution_and_kineto(
             exe.attrs = {**kin.attrs, **exe.attrs}
             if not exe.inputs and kin.inputs:
                 exe.inputs = kin.inputs
+
         merged.append(exe)
 
     return ReplayWorkload(
