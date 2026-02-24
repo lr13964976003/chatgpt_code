@@ -63,29 +63,6 @@ python generated/replay_workload.py --warmup 2 --iters 10 --device npu:0
 }
 ```
 
-
-Chakra `nodes` 模式示例（无 `ts/dur` 也可）：
-
-```json
-{
-  "schema": "1.1.1-chakra.0.0.4",
-  "start_ts": 197820970,
-  "nodes": [
-    {
-      "id": 3,
-      "name": "aten::mul",
-      "inputs": {"shapes": [[4, 4], [4, 4]], "types": ["Float", "Float"]},
-      "attrs": [{"name": "tid", "value": 8}]
-    }
-  ]
-}
-```
-
-该模式下工具会：
-- 从 `inputs.shapes/types` 推断输入张量；
-- 从 `attrs` 提取 `tid` 等信息；
-- 若节点没有 `ts/dur`，使用 `start_ts + 节点序号` 生成稳定顺序，并优先用 kineto 的 `dur/stream` 进行补全。
-
 ### kineto trace
 
 支持 chrome trace 常见结构：
